@@ -6,7 +6,8 @@ export const STATE = {
 
 const isFunction = (maybeFunc) => typeof maybeFunc === 'function';
 
-const isThenable = (maybePromise) => maybePromise && typeof maybePromise.then === 'function';
+const isThenable = (maybePromise) =>
+  maybePromise && typeof maybePromise.then === 'function';
 
 export class MyPromise {
   #state;
@@ -93,5 +94,24 @@ export class MyPromise {
     this.#thenHandlersQueue = [];
   }
 
-  #propagateWithRejected() {}
+  #propagateWithRejected() {
+    this.#thenHandlersQueue.forEach(([childPromise, , onRejectedHandler]) => {
+      if (isFunction(onRejectedHandler)) {
+        const returnedFromThen = onRejectedHandler(this.#reason);
+
+        if (isThenable(returnedFromThen)) {
+          returnedFromThen.then(
+            (value) => childPromise.#resolveWith(value),
+            (reason) => childPromise.#rejectWith(reason),
+          );
+        } else {
+          childPromise.#resolveWith(returnedFromThen);
+        }
+      } else {
+        return childPromise.#rejectWith(this.#reason);
+      }
+    });
+
+    this.#thenHandlersQueue = [];
+  }
 }
