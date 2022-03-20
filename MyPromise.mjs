@@ -4,7 +4,7 @@ export const STATE = {
   REJECTED: 'rejected',
 };
 
-const isFunction = maybeFunc => typeof maybeFunc === 'function';
+const isFunction = (maybeFunc) => typeof maybeFunc === 'function';
 
 export class MyPromise {
   constructor(executor) {
@@ -17,10 +17,7 @@ export class MyPromise {
 
     if (isFunction(executor)) {
       try {
-        executor(
-          this.#resolveWith.bind(this),
-          this.#rejectWith.bind(this),
-        );
+        executor(this.#resolveWith.bind(this), this.#rejectWith.bind(this));
       } catch (error) {
         this.#rejectWith(error);
       }
@@ -43,9 +40,11 @@ export class MyPromise {
 
   then(onFulfilledHandler, onRejectedHandler) {
     const childPromise = new MyPromise();
-    this.#thenHandlersQueue.push(
-      [childPromise, onFulfilledHandler, onRejectedHandler],
-    );
+    this.#thenHandlersQueue.push([
+      childPromise,
+      onFulfilledHandler,
+      onRejectedHandler,
+    ]);
 
     // If already settled:
     if (this.#state === STATE.FULFILLED) {
@@ -56,4 +55,29 @@ export class MyPromise {
 
     return childPromise;
   }
+
+  #propagateWithFulfilled() {
+    this.#thenHandlersQueue.forEach(([childPromise, onFulfilledHandler]) => {
+      if (isFunction(onFulfilledHandler)) {
+        const returnedFromThen = onFulfilledHandler(this.#value);
+
+        if (isThenable(returnedFromThen)) {
+          // If the promise was returned,
+          // then we resolve child promise in then callbacks of the returned promise:
+          returnedFromThen.then(
+            value => childPromise.#resolveWith(value),
+            reason => childPromise.#rejectWith(reason),
+          );
+        } else {
+          childPromise.#resolveWith(returnedFromThen);
+        }
+      } else {
+        return childPromise.#resolveWith(this.#value);
+      }
+    });
+
+    this.#thenHandlersQueue = [];
+  }
+
+  #propagateWithRejected() {}
 }
