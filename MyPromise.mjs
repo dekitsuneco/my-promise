@@ -28,6 +28,8 @@ export class MyPromise {
     if (this.#state === STATE.PENDING) {
       this.#state = STATE.FULFILLED;
       this.#value = value;
+
+      this.#propagateWithFulfilled();
     }
   }
 
@@ -35,6 +37,8 @@ export class MyPromise {
     if (this.#state === STATE.PENDING) {
       this.#state = STATE.REJECTED;
       this.#reason = reason;
+
+      this.#propagateWithRejected();
     }
   }
 
