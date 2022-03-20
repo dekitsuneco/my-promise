@@ -171,28 +171,36 @@ class MyPromise {
 
   #propagateWithFulfilled() {
     this.#thenHandlersQueue.forEach(([childPromise, onFulfilledHandler]) => {
-      if (isFunction(onFulfilledHandler)) {
-        const returnedFromThen = onFulfilledHandler(this.#value);
+      try {
+        if (isFunction(onFulfilledHandler)) {
+          const returnedFromThen = onFulfilledHandler(this.#value);
 
-        if (isThenable(returnedFromThen)) {
-          // If the promise was returned,
-          // then we resolve child promise in then callbacks of the returned promise:
-          returnedFromThen.then(
-            (value) => childPromise.#resolveWith(value),
-            (reason) => childPromise.#rejectWith(reason),
-          );
-        } else {
-          childPromise.#resolveWith(returnedFromThen);
+          if (isThenable(returnedFromThen)) {
+            // If the promise was returned,
+            // then we resolve child promise in then callbacks of the returned promise:
+            returnedFromThen.then(
+              (value) => childPromise.#resolveWith(value),
+              (reason) => childPromise.#rejectWith(reason),
+            );
+          } else {
+            childPromise.#resolveWith(returnedFromThen);
+          }
         }
-      }
 
-      return childPromise.#resolveWith(this.#value);
+        return childPromise.#resolveWith(this.#value);
+      } catch (error) {
+        return childPromise.#rejectWith(error);
+      }
     });
 
     this.#finallyHandlersQueue.forEach(([childPromise, sideEffect]) => {
-      sideEffect();
+      try {
+        sideEffect();
+      } catch (error) {
+        return childPromise.#rejectWith(error);
+      }
 
-      childPromise.#resolveWith(this.#value);
+      return childPromise.#resolveWith(this.#value);
     });
 
     this.#thenHandlersQueue = [];
@@ -201,26 +209,34 @@ class MyPromise {
 
   #propagateWithRejected() {
     this.#thenHandlersQueue.forEach(([childPromise, , onRejectedHandler]) => {
-      if (isFunction(onRejectedHandler)) {
-        const returnedFromThen = onRejectedHandler(this.#reason);
+      try {
+        if (isFunction(onRejectedHandler)) {
+          const returnedFromThen = onRejectedHandler(this.#reason);
 
-        if (isThenable(returnedFromThen)) {
-          returnedFromThen.then(
-            (value) => childPromise.#resolveWith(value),
-            (reason) => childPromise.#rejectWith(reason),
-          );
-        } else {
-          childPromise.#resolveWith(returnedFromThen);
+          if (isThenable(returnedFromThen)) {
+            returnedFromThen.then(
+              (value) => childPromise.#resolveWith(value),
+              (reason) => childPromise.#rejectWith(reason),
+            );
+          } else {
+            childPromise.#resolveWith(returnedFromThen);
+          }
         }
-      }
 
-      return childPromise.#rejectWith(this.#reason);
+        return childPromise.#rejectWith(this.#reason);
+      } catch (error) {
+        return childPromise.#rejectWith(error);
+      }
     });
 
     this.#finallyHandlersQueue.forEach(([childPromise, sideEffect]) => {
-      sideEffect();
+      try {
+        sideEffect();
+      } catch (error) {
+        return childPromise.#rejectWith(error);
+      }
 
-      childPromise.#rejectWith(this.#value);
+      return childPromise.#rejectWith(this.#reason);
     });
 
     this.#thenHandlersQueue = [];

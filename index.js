@@ -1,3 +1,5 @@
+/* eslint-disable no-plusplus */
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-console */
 // eslint-disable-next-line import/extensions
 import MyPromise from './MyPromise.mjs';
