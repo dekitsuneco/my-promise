@@ -1,23 +1,72 @@
-export const STATE = {
+/**
+ * Possible states of a promise.
+ * @type {{
+ * PENDING: string,
+ * FULFILLED: string,
+ * REJECTED: string
+ * }}
+ */
+const STATE = {
   PENDING: 'pending',
   FULFILLED: 'fulfilled',
   REJECTED: 'rejected',
 };
 
+/**
+ * Checks if argument is a funciton.
+ * @function isFunction
+ * @param {any} maybeFunc
+ * @returns {boolean}
+ */
 const isFunction = (maybeFunc) => typeof maybeFunc === 'function';
 
-const isThenable = (maybePromise) =>
-  maybePromise && typeof maybePromise.then === 'function';
+/**
+ * Checks if argument has then method.
+ * @function isThenable
+ * @param {any} maybePromise
+ * @returns {boolean}
+ */
+const isThenable = (maybePromise) => maybePromise && isFunction(maybePromise.then);
 
-export class MyPromise {
+/**
+ * Promise class.
+ * @class
+ */
+class MyPromise {
+  /**
+   * Stores the promise state.
+   * @type {string}
+   */
   #state;
 
+  /**
+   * Stores the value promise resolved with.
+   * @type {any}
+   */
   #value;
 
+  /**
+   * Stores the reason promise rejected with.
+   * @type {Error}
+   */
   #reason;
 
+  /**
+   * Array that stores arrays child promise and then handlers.
+   * @type {Array}
+   */
   #thenHandlersQueue;
 
+  /**
+   * Array that stores arrays of child promise and finally handlers.
+   * @type {Array}
+   */
+  #finallyHandlersQueue;
+
+  /**
+   * Constructor of the class.
+   * @param {(function|undefined)} executor
+   */
   constructor(executor) {
     this.#state = STATE.PENDING;
 
@@ -25,6 +74,7 @@ export class MyPromise {
     this.#reason = undefined;
 
     this.#thenHandlersQueue = [];
+    this.#finallyHandlersQueue = [];
 
     if (isFunction(executor)) {
       try {
@@ -35,6 +85,10 @@ export class MyPromise {
     }
   }
 
+  /**
+   * Method called to resolve promise with a value.
+   * @param {any} value
+   */
   #resolveWith(value) {
     if (this.#state === STATE.PENDING) {
       this.#state = STATE.FULFILLED;
@@ -44,6 +98,10 @@ export class MyPromise {
     }
   }
 
+  /**
+   * Method called to reject a promise with an error.
+   * @param {Error} reason
+   */
   #rejectWith(reason) {
     if (this.#state === STATE.PENDING) {
       this.#state = STATE.REJECTED;
@@ -53,6 +111,12 @@ export class MyPromise {
     }
   }
 
+  /**
+   * Method called to pass a value to the next promise.
+   * @param {(function|null)} onFulfilledHandler
+   * @param {(function|null)} onRejectedHandler
+   * @returns {MyPromise}
+   */
   then(onFulfilledHandler, onRejectedHandler) {
     const childPromise = new MyPromise();
     this.#thenHandlersQueue.push([
@@ -71,8 +135,33 @@ export class MyPromise {
     return childPromise;
   }
 
+  /**
+   * Method called in case of an error.
+   * @param {function} onRejectedHandler
+   * @returns {MyPromise}
+   */
   catch(onRejectedHandler) {
     return this.then(null, onRejectedHandler);
+  }
+
+  /**
+   * Method called always called after all thens and catches.
+   * @param {function} sideEffect
+   * @returns {MyPromise}
+   */
+  finally(sideEffect) {
+    if (this.#state !== STATE.PENDING) {
+      sideEffect();
+
+      return this.#state === STATE.FULFILLED
+        ? MyPromise.#resolveWith(this.#value)
+        : MyPromise.#rejectWith(this.#reason);
+    }
+
+    const childPromise = new MyPromise();
+    this.#finallyHandlersQueue.push([childPromise, sideEffect]);
+
+    return childPromise;
   }
 
   #propagateWithFulfilled() {
@@ -90,12 +179,19 @@ export class MyPromise {
         } else {
           childPromise.#resolveWith(returnedFromThen);
         }
-      } else {
-        return childPromise.#resolveWith(this.#value);
       }
+
+      return childPromise.#resolveWith(this.#value);
+    });
+
+    this.#finallyHandlersQueue.forEach(([childPromise, sideEffect]) => {
+      sideEffect();
+
+      childPromise.#resolveWith(this.#value);
     });
 
     this.#thenHandlersQueue = [];
+    this.#finallyHandlersQueue = [];
   }
 
   #propagateWithRejected() {
@@ -111,11 +207,20 @@ export class MyPromise {
         } else {
           childPromise.#resolveWith(returnedFromThen);
         }
-      } else {
-        return childPromise.#rejectWith(this.#reason);
       }
+
+      return childPromise.#rejectWith(this.#reason);
+    });
+
+    this.#finallyHandlersQueue.forEach(([childPromise, sideEffect]) => {
+      sideEffect();
+
+      childPromise.#rejectWith(this.#value);
     });
 
     this.#thenHandlersQueue = [];
+    this.#finallyHandlersQueue = [];
   }
 }
+
+export { STATE, MyPromise };
