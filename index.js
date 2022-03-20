@@ -48,3 +48,21 @@ const child4 = promise.then((v) => {
     'Child promises has no then method',
   ),
 );
+
+// * 4. Catch & finally:
+let hasCathced = false;
+let hasBeenInFinally = false;
+
+new MyPromise((resolve, reject) => {
+  throw new Error('Catch me');
+})
+  .catch((err) => {
+    console.assert(err === 'Catch me', 'The error is different');
+    hasCathced = true;
+  })
+  .finally((m) => {
+    hasBeenInFinally = true;
+  });
+
+console.assert(hasCathced, 'The error has not cathed');
+console.assert(hasBeenInFinally, 'Did not enter finally');
