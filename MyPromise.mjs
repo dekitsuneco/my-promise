@@ -6,7 +6,17 @@ export const STATE = {
 
 const isFunction = (maybeFunc) => typeof maybeFunc === 'function';
 
+const isThenable = (maybePromise) => maybePromise && typeof maybePromise.then === 'function';
+
 export class MyPromise {
+  #state;
+
+  #value;
+
+  #reason;
+
+  #thenHandlersQueue;
+
   constructor(executor) {
     this.#state = STATE.PENDING;
 
@@ -69,8 +79,8 @@ export class MyPromise {
           // If the promise was returned,
           // then we resolve child promise in then callbacks of the returned promise:
           returnedFromThen.then(
-            value => childPromise.#resolveWith(value),
-            reason => childPromise.#rejectWith(reason),
+            (value) => childPromise.#resolveWith(value),
+            (reason) => childPromise.#rejectWith(reason),
           );
         } else {
           childPromise.#resolveWith(returnedFromThen);
