@@ -42,10 +42,12 @@ const child4 = promise.then((v) => {
   console.log(v);
 });
 
-[child1, child2, child3, child4].forEach((child) => console.assert(
-  typeof child?.then === 'function',
-  'Child promises has no then method',
-));
+[child1, child2, child3, child4].forEach((child) =>
+  console.assert(
+    typeof child?.then === 'function',
+    'Child promises has no then method',
+  ),
+);
 
 // * 4. Catch & finally:
 let hasCathced = false;
@@ -55,10 +57,11 @@ new MyPromise(() => {
   throw new Error('Catch me');
 })
   .catch((err) => {
-    console.assert(err === 'Catch me', 'The error is different');
+    console.assert(err.message === 'Catch me', 'The error is different');
     hasCathced = true;
   })
   .finally(() => {
+    console.log('in finally');
     hasBeenInFinally = true;
   });
 
