@@ -10,6 +10,7 @@ const p = new MyPromise((resolve, reject) => {
   console.log('Call in executor');
 
   setTimeout(() => resolve(1), 3000);
+  //resolve(1);
 })
   .then((v) => {
     console.log(`Call in ${v} then`);
