@@ -7,7 +7,7 @@ console.log('Before promise');
 const p = new MyPromise((resolve, reject) => {
   console.log('Call in executor');
 
-  resolve(1);
+  setTimeout(() => resolve(1), 3000);
 })
   .then((v) => {
     console.log(`Call in ${v} then`);
@@ -39,6 +39,7 @@ const p = new MyPromise((resolve, reject) => {
   })
   .finally(() => {
     console.log('Call in finally');
+    throw new Error('Inside finally');
   });
 
 console.log('After promise');
