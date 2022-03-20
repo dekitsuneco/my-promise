@@ -26,7 +26,8 @@ const isFunction = (maybeFunc) => typeof maybeFunc === 'function';
  * @param {any} maybePromise
  * @returns {boolean}
  */
-const isThenable = (maybePromise) => maybePromise && isFunction(maybePromise.then);
+const isThenable = (maybePromise) =>
+  maybePromise && isFunction(maybePromise.then);
 
 /**
  * Promise class.
@@ -127,7 +128,11 @@ class MyPromise {
 
     // If already settled:
     if (this.#state === STATE.FULFILLED) {
-      this.#propagateWithFulfilled();
+      try {
+        this.#propagateWithFulfilled();
+      } catch (error) {
+        childPromise.#rejectWith(error);
+      }
     } else if (this.#state === STATE.REJECTED) {
       this.#propagateWithRejected();
     }
@@ -154,8 +159,8 @@ class MyPromise {
       sideEffect();
 
       return this.#state === STATE.FULFILLED
-        ? MyPromise.#resolveWith(this.#value)
-        : MyPromise.#rejectWith(this.#reason);
+        ? new MyPromise().#resolveWith(this.#value)
+        : new MyPromise().#rejectWith(this.#reason);
     }
 
     const childPromise = new MyPromise();
