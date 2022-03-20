@@ -1,4 +1,6 @@
-import {STATE} from './MyPromise.mjs';
+/* eslint-disable no-console */
+// eslint-disable-next-line import/extensions
+import { STATE } from './MyPromise.mjs';
 
 // * 1. STATE object:
 console.assert(STATE.PENDING === 'pending', 'Pending state is incorrect');
