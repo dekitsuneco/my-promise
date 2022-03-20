@@ -228,4 +228,4 @@ class MyPromise {
   }
 }
 
-export { STATE, MyPromise };
+export default MyPromise;
