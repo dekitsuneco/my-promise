@@ -127,18 +127,14 @@ class MyPromise {
     ]);
 
     // If already settled:
-    if (this.#state === STATE.FULFILLED) {
-      try {
+    try {
+      if (this.#state === STATE.FULFILLED) {
         this.#propagateWithFulfilled();
-      } catch (error) {
-        childPromise.#rejectWith(error);
-      }
-    } else if (this.#state === STATE.REJECTED) {
-      try {
+      } else if (this.#state === STATE.REJECTED) {
         this.#propagateWithRejected();
-      } catch (error) {
-        childPromise.#rejectWith(error);
       }
+    } catch (error) {
+      childPromise.#rejectWith(error);
     }
 
     return childPromise;
