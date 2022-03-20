@@ -134,7 +134,11 @@ class MyPromise {
         childPromise.#rejectWith(error);
       }
     } else if (this.#state === STATE.REJECTED) {
-      this.#propagateWithRejected();
+      try {
+        this.#propagateWithRejected();
+      } catch (error) {
+        childPromise.#rejectWith(error);
+      }
     }
 
     return childPromise;
