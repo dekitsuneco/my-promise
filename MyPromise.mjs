@@ -18,12 +18,26 @@ export class MyPromise {
     if (isFunction(executor)) {
       try {
         executor(
-          this.resolve.bind(this),
-          this.reject.bind(this),
+          this.resolveWith.bind(this),
+          this.rejectWith.bind(this),
         );
       } catch (error) {
-        this.reject(error);
+        this.rejectWith(error);
       }
+    }
+  }
+
+  resolveWith(value) {
+    if (this.#state === STATE.PENDING) {
+      this.#state = STATE.FULFILLED;
+      this.#value = value;
+    }
+  }
+
+  rejectWith(reason) {
+    if (this.#state === STATE.PENDING) {
+      this.#state = STATE.REJECTED;
+      this.#reason = reason;
     }
   }
 }
