@@ -127,15 +127,15 @@ class MyPromise {
     ]);
 
     // If already settled:
-    try {
-      if (this.#state === STATE.FULFILLED) {
-        this.#propagateWithFulfilled();
-      } else if (this.#state === STATE.REJECTED) {
-        this.#propagateWithRejected();
-      }
-    } catch (error) {
-      childPromise.#rejectWith(error);
+    //try {
+    if (this.#state === STATE.FULFILLED) {
+      this.#propagateWithFulfilled();
+    } else if (this.#state === STATE.REJECTED) {
+      this.#propagateWithRejected();
     }
+    /*} catch (error) {
+      childPromise.#rejectWith(error);
+    }*/
 
     return childPromise;
   }
@@ -156,7 +156,11 @@ class MyPromise {
    */
   finally(sideEffect) {
     if (this.#state !== STATE.PENDING) {
-      sideEffect();
+      try {
+        sideEffect();
+      } catch (error) {
+        new MyPromise().#rejectWith(error);
+      }
 
       return this.#state === STATE.FULFILLED
         ? new MyPromise().#resolveWith(this.#value)
