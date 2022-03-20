@@ -71,6 +71,10 @@ export class MyPromise {
     return childPromise;
   }
 
+  catch(onRejectedHandler) {
+    return this.then(null, onRejectedHandler);
+  }
+
   #propagateWithFulfilled() {
     this.#thenHandlersQueue.forEach(([childPromise, onFulfilledHandler]) => {
       if (isFunction(onFulfilledHandler)) {
