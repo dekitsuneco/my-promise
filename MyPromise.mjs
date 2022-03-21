@@ -26,8 +26,7 @@ const isFunction = (maybeFunc) => typeof maybeFunc === 'function';
  * @param {any} maybePromise
  * @returns {boolean}
  */
-const isThenable = (maybePromise) =>
-  maybePromise && isFunction(maybePromise.then);
+const isThenable = (maybePromise) => maybePromise && isFunction(maybePromise.then);
 
 /**
  * Promise class.
@@ -91,12 +90,14 @@ class MyPromise {
    * @param {any} value
    */
   #resolveWith(value) {
-    if (this.#state === STATE.PENDING) {
-      this.#state = STATE.FULFILLED;
-      this.#value = value;
+    setTimeout(() => {
+      if (this.#state === STATE.PENDING) {
+        this.#state = STATE.FULFILLED;
+        this.#value = value;
 
-      this.#propagateWithFulfilled();
-    }
+        this.#propagateWithFulfilled();
+      }
+    });
   }
 
   /**
@@ -104,12 +105,14 @@ class MyPromise {
    * @param {Error} reason
    */
   #rejectWith(reason) {
-    if (this.#state === STATE.PENDING) {
-      this.#state = STATE.REJECTED;
-      this.#reason = reason;
+    setTimeout(() => {
+      if (this.#state === STATE.PENDING) {
+        this.#state = STATE.REJECTED;
+        this.#reason = reason;
 
-      this.#propagateWithRejected();
-    }
+        this.#propagateWithRejected();
+      }
+    });
   }
 
   /**
@@ -127,15 +130,11 @@ class MyPromise {
     ]);
 
     // If already settled:
-    //try {
     if (this.#state === STATE.FULFILLED) {
       this.#propagateWithFulfilled();
     } else if (this.#state === STATE.REJECTED) {
       this.#propagateWithRejected();
     }
-    /*} catch (error) {
-      childPromise.#rejectWith(error);
-    }*/
 
     return childPromise;
   }
@@ -189,12 +188,14 @@ class MyPromise {
           } else {
             childPromise.#resolveWith(returnedFromThen);
           }
+        } else {
+          return childPromise.#resolveWith(this.#value);
         }
-
-        return childPromise.#resolveWith(this.#value);
       } catch (error) {
         return childPromise.#rejectWith(error);
       }
+
+      return undefined;
     });
 
     this.#finallyHandlersQueue.forEach(([childPromise, sideEffect]) => {
@@ -225,12 +226,14 @@ class MyPromise {
           } else {
             childPromise.#resolveWith(returnedFromThen);
           }
+        } else {
+          return childPromise.#rejectWith(this.#reason);
         }
-
-        return childPromise.#rejectWith(this.#reason);
       } catch (error) {
         return childPromise.#rejectWith(error);
       }
+
+      return undefined;
     });
 
     this.#finallyHandlersQueue.forEach(([childPromise, sideEffect]) => {
